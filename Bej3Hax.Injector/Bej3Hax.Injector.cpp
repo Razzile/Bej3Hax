@@ -11,6 +11,7 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
+#include <Settings.h>
 
 DWORD FindProcessID(std::wstring procName) {
   HANDLE hndl =
@@ -31,7 +32,7 @@ DWORD FindProcessID(std::wstring procName) {
 }
 
 int main() {
-  std::filesystem::path dllPath = std::filesystem::current_path().parent_path() / "Release" / "Bej3Hax.dll";
+  std::filesystem::path dllPath = std::filesystem::current_path().parent_path() / "Debug" / "Bej3Hax.dll";
   wprintf(L"Attempting to inject: %s\n\n", dllPath.wstring().c_str());
 
   auto processId = FindProcessID(L"Bejeweled3.exe");
@@ -42,6 +43,10 @@ int main() {
     return 1;
   }
 
+  Settings settings;
+  settings.swapAlwaysSucceeds = true;
+  settings.pieceFlags = Sexy::Piece::PieceFlags::Supernova;
+
   // Inject dllToInject into the target process Id, passing
   // freqOffset as the pass through data.
   NTSTATUS nt =
@@ -50,8 +55,8 @@ int main() {
                       EASYHOOK_INJECT_DEFAULT,
                       dllPath.wstring().data(),  // 32-bit
                       nullptr,          // 64-bit not provided
-                      nullptr,  // data to send to injected DLL entry point
-                      0         // size of data to send
+                      &settings,  // data to send to injected DLL entry point
+                      sizeof(settings)         // size of data to send
       );
 
   if (nt != 0) {
