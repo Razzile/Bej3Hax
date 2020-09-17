@@ -27,9 +27,12 @@ struct Piece {
 };
 
 struct Board {
+  typedef void(__thiscall* UpdateGame)(Sexy::Board* _this);
+  typedef void(__thiscall* DoUpdate)(Sexy::Board* _this);
   typedef bool(__thiscall* TrySwap)(Sexy::Board* _this, Sexy::Piece* piece,
                                     int x, int y, bool always_allow, bool unk1,
                                     bool unk2);
+  typedef Sexy::Piece*(__thiscall* GetSelectedPiece)(Sexy::Board* _this);
 };
 
 }  // namespace Sexy

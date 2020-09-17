@@ -27,11 +27,15 @@ void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* inRemoteInfo) {
   std::cout << "Passed in data size: " << inRemoteInfo->UserDataSize << "\n";
 
   // Perform hooking
-  HOOK_TRACE_INFO hHook = {NULL};  // keep track of our hook
+  HOOK_TRACE_INFO trySwapHook = {nullptr};
+  HOOK_TRACE_INFO doUpdateHook = {nullptr};
 
   auto baseAddress = GetModuleHandle(L"Bejeweled3.exe");
 
   auto trySwapAddr = 0x75EE20;  // - (DWORD)baseAddress;
+  auto getSelectedPieceAddr = 0x73BF00;
+  auto updateGameAddr = 0x767E20;
+  auto doUpdateAddr = 0x767090;
 
   // copy settings from injector
   Hooks::settings = *reinterpret_cast<Settings*>(inRemoteInfo->UserData);
@@ -39,10 +43,25 @@ void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* inRemoteInfo) {
   std::cout << "Loaded settings: " << Hooks::settings;
 
   Hooks::oTrySwap = decltype(Hooks::oTrySwap)(trySwapAddr);
+  Hooks::oGetSelectedPiece =
+      decltype(Hooks::oGetSelectedPiece)(getSelectedPieceAddr);
+  Hooks::oUpdateGame = decltype(Hooks::oUpdateGame)(updateGameAddr);
+  Hooks::oDoUpdate = decltype(Hooks::oDoUpdate)(doUpdateAddr);
 
   // Install the hook
   NTSTATUS result = LhInstallHook((void*)trySwapAddr, Hooks::MyTrySwap,
-                                  nullptr, &hHook);
+                                  nullptr, &trySwapHook);
+  if (FAILED(result)) {
+    std::wstring s(RtlGetLastErrorString());
+    std::wcout << "Failed to install hook: " << std::endl;
+    std::wcout << s;
+  } else {
+    std::cout << "Hooks installed successfully." << std::endl;
+  }
+
+  // Install the hook
+  result =
+      LhInstallHook((void*)doUpdateAddr, Hooks::MyDoUpdate, nullptr, &doUpdateHook);
   if (FAILED(result)) {
     std::wstring s(RtlGetLastErrorString());
     std::wcout << "Failed to install hook: " << std::endl;
@@ -58,7 +77,8 @@ void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* inRemoteInfo) {
   ULONG ACLEntries[1] = {0};
 
   // Disable the hook for the provided threadIds, enable for all others
-  LhSetExclusiveACL(ACLEntries, 1, &hHook);
+  LhSetExclusiveACL(ACLEntries, 1, &trySwapHook);
+  LhSetExclusiveACL(ACLEntries, 1, &doUpdateHook);
 
   return;
 }
