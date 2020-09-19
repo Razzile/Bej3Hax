@@ -4,14 +4,14 @@
 
 #include <Windows.h>
 
+#include <Bejeweled.h>
+#include <Settings.h>
 #include <TlHelp32.h>
 #include <easyhook.h>
-#include <tchar.h>
+#include <spdlog/spdlog.h>
 
-#include <iostream>
-#include <string>
 #include <filesystem>
-#include <Settings.h>
+#include <string>
 
 DWORD FindProcessID(std::wstring procName) {
   HANDLE hndl =
@@ -32,14 +32,21 @@ DWORD FindProcessID(std::wstring procName) {
 }
 
 int main() {
-  std::filesystem::path dllPath = std::filesystem::current_path().parent_path() / "Debug" / "Bej3Hax.dll";
-  wprintf(L"Attempting to inject: %s\n\n", dllPath.wstring().c_str());
+  spdlog::set_level(spdlog::level::info);
+#ifdef _DEBUG
+  spdlog::set_level(spdlog::level::debug);
+#endif
+
+  std::filesystem::path dllPath =
+      std::filesystem::current_path().parent_path() / "Debug" / "Bej3Hax.dll";
+  spdlog::info("Attempting to inject: {}", dllPath.string());
 
   auto processId = FindProcessID(L"Bejeweled3.exe");
 
   if (processId == 0) {
-    std::cerr << "Could not find Bejeweled 3 process. Please make sure "
-                 "Bejeweled 3 is running";
+    spdlog::error(
+        "Could not find Bejeweled 3 process. Please make sure "
+        "Bejeweled 3 is running");
     return 1;
   }
 
@@ -54,23 +61,18 @@ int main() {
                       0,          // ThreadId to wake up upon injection
                       EASYHOOK_INJECT_DEFAULT,
                       dllPath.wstring().data(),  // 32-bit
-                      nullptr,          // 64-bit not provided
+                      nullptr,                   // 64-bit not provided
                       &settings,  // data to send to injected DLL entry point
-                      sizeof(settings)         // size of data to send
+                      sizeof(settings)  // size of data to send
       );
 
   if (nt != 0) {
-    printf("RhInjectLibrary failed with error code = %d\n", nt);
     PWCHAR err = RtlGetLastErrorString();
-    std::wcout << err << "\n";
+    spdlog::error("RhInjectLibrary failed with error {0} [code = {1}]", nt,
+                  fmt::to_string(err));
   } else {
-    std::wcout << L"Library injected successfully.\n";
+    spdlog::info("Library injected successfully.\n");
   }
-
-  std::wcout << "Press Enter to exit";
-  std::wstring input;
-  std::getline(std::wcin, input);
-  std::getline(std::wcin, input);
   return 0;
 }
 

@@ -5,7 +5,8 @@
 
 #include <iostream>
 #include <string>
-
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include "Hooks.h"
 
 // EasyHook will be looking for this export to support DLL injection. If not
@@ -14,7 +15,11 @@ extern "C" void __declspec(dllexport) __stdcall NativeInjectionEntryPoint(
     REMOTE_ENTRY_INFO* inRemoteInfo);
 
 void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* inRemoteInfo) {
+  spdlog::set_level(spdlog::level::info);
 #ifdef _DEBUG
+  spdlog::set_level(spdlog::level::debug);
+
+  // Allocate a new console window and reopen standard IO streams
   AllocConsole();
 
   freopen("CONIN$", "r", stdin);
@@ -22,23 +27,19 @@ void __stdcall NativeInjectionEntryPoint(REMOTE_ENTRY_INFO* inRemoteInfo) {
   freopen("CONOUT$", "w", stderr);
 #endif
 
-  std::cout << "Injected by process Id: " << inRemoteInfo->HostPID << "\n";
-  std::cout << "Passed in data size: " << inRemoteInfo->UserDataSize << "\n";
+  auto logger = spdlog::stdout_color_mt("Bej3hax");
+  spdlog::set_default_logger(logger);
 
-  // Perform hooking
-  HOOK_TRACE_INFO trySwapHook = {nullptr};
-  HOOK_TRACE_INFO doUpdateHook = {nullptr};
-
-  auto baseAddress = GetModuleHandle(L"Bejeweled3.exe");
-
+  spdlog::debug("Injected by process Id: {}" , inRemoteInfo->HostPID);
+  spdlog::debug("Received {} bytes from injector", inRemoteInfo->UserDataSize);
 
 
   // copy settings from injector
   Hooks::settings = *reinterpret_cast<Settings*>(inRemoteInfo->UserData);
 
-  std::cout << "Loaded settings: " << Hooks::settings;
+  spdlog::debug("Loaded settings: {}", Hooks::settings);
 
-  std::cout << "Initializing hooks" << std::endl;
+  spdlog::info("Initializing hooks");
 
   Hooks::InitializeHooks();
 }

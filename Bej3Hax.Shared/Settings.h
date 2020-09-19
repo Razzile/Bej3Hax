@@ -1,19 +1,20 @@
 #pragma once
 
-#include <ostream>
-
-#include "Bejeweled.h"
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 
 struct Settings {
   int pieceFlags;
   bool swapAlwaysSucceeds;
 
-  friend std::ostream& operator<<(std::ostream&, const Settings& settings);
+  template <typename OStream>
+  friend OStream& operator<<(OStream&, const Settings& settings);
 };
 
-inline std::ostream& operator<<(std::ostream& out, const Settings& settings) {
-  out << "\n\tpieceFlags: " << std::hex << settings.pieceFlags << "\n\t"
-      << "swapAlwaysSucceeds: " << std::boolalpha << settings.swapAlwaysSucceeds
-      << std::endl;
+template <typename OStream>
+OStream& operator<<(OStream& out, const Settings& settings) {
+  out << "[pieceFlags=" << std::hex << settings.pieceFlags << ", "
+      << "swapAlwaysSucceeds=" << std::boolalpha << settings.swapAlwaysSucceeds
+      << "]";
   return out;
 }
