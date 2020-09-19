@@ -3,7 +3,7 @@
 namespace Sexy {
 
 struct Piece {
-  enum PieceFlags {
+  enum class PieceFlags {
     Normal = 0 << 0,
     Bomb = 1 << 0,
     Hypercube = 1 << 1,

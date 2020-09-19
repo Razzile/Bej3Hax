@@ -2,6 +2,8 @@
 
 #include <Bejeweled.h>
 
+
+#include "Hook.h"
 #include "Settings.h"
 
 namespace Hooks {
@@ -19,5 +21,7 @@ void _fastcall MyDoUpdate(Board* self, void* skip);
 extern Board::TrySwap oTrySwap;
 bool _fastcall MyTrySwap(Board* self, void* skip, Piece* piece,
                          int x, int y, bool always_allow, bool unk1, bool unk2);
+
+void InitializeHooks();
 
 }  // namespace Hooks

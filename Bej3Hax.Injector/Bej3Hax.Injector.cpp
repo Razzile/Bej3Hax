@@ -45,7 +45,7 @@ int main() {
 
   Settings settings;
   settings.swapAlwaysSucceeds = true;
-  settings.pieceFlags = Sexy::Piece::PieceFlags::Supernova;
+  settings.pieceFlags = static_cast<int>(Sexy::Piece::PieceFlags::Supernova);
 
   // Inject dllToInject into the target process Id, passing
   // freqOffset as the pass through data.
