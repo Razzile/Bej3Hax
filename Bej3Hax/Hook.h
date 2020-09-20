@@ -9,30 +9,27 @@
 template <uintptr_t offset, typename Func>
 class Hook;
 
-template <uintptr_t offset, typename R, typename... Args>
-class Hook<offset, R(__thiscall*)(Args...)> {
- public:
-  typedef R(__thiscall* Func)(Args...);
+class HookBase {
+public:
+  HookBase(uintptr_t offset)
+    : offset_(offset),
+      target_(nullptr),
+      hook_trace_info_() {
+  }
 
-  Func& original = original_;
+  HookBase(const HookBase&) = delete;
+  HookBase(HookBase&&) = delete;
 
-  Hook()
-      : offset_(offset),
-        original_(decltype(original_)(offset)),
-        target_(nullptr),
-        hook_trace_info_() {}
+  void operator=(const HookBase&) = delete;
+  void operator=(HookBase&&) = delete;
 
-  Hook(const Hook&) = delete;
-  Hook(Hook&&) = delete;
-
-  void operator=(const Hook&) = delete;
-  void operator=(Hook&&) = delete;
-
-  ~Hook() { LhUninstallHook(&hook_trace_info_); }
+  ~HookBase() {
+    LhUninstallHook(&hook_trace_info_);
+  }
 
   void Initialize(void* target) {
     target_ = target;
-    spdlog::info("Initializing hook at 0x{0:x} [hook function: {1}]", offset,
+    spdlog::info("Initializing hook at 0x{0:x} [hook function: {1}]", offset_,
                  target);
 
     LhInstallHook(reinterpret_cast<void*>(offset_), target_, nullptr,
@@ -42,129 +39,52 @@ class Hook<offset, R(__thiscall*)(Args...)> {
     LhSetExclusiveACL(acl_entries, 1, &hook_trace_info_);
   }
 
- private:
+private:
   uintptr_t offset_;
-  Func original_;
   void* target_;
   HOOK_TRACE_INFO hook_trace_info_;
 };
 
+
 template <uintptr_t offset, typename R, typename... Args>
-class Hook<offset, R(__stdcall*)(Args...)> {
+class Hook<offset, R(__thiscall*)(Args ...)> : public HookBase {
+public:
+  typedef R (__thiscall* Func)(Args ...);
+
+  Func original = nullptr;
+
+  Hook()
+    : HookBase(offset),
+      original(decltype(original)(offset)) {
+  }
+};
+
+template <uintptr_t offset, typename R, typename... Args>
+class Hook<offset, R(__stdcall*)(Args...)> : public HookBase {
  public:
   typedef R(__stdcall* Func)(Args...);
 
-  Func& original = original_;
+  Func original = nullptr;
 
-  Hook()
-      : offset_(offset),
-        original_(decltype(original_)(offset)),
-        target_(nullptr),
-        hook_trace_info_() {}
-
-  Hook(const Hook&) = delete;
-  Hook(Hook&&) = delete;
-
-  void operator=(const Hook&) = delete;
-  void operator=(Hook&&) = delete;
-
-  ~Hook() { LhUninstallHook(&hook_trace_info_); }
-
-  void Initialize(void* target) {
-    target_ = target;
-    spdlog::info("Initializing hook at 0x{0:x} [hook function: {1}]", offset,
-                 target);
-
-    LhInstallHook(reinterpret_cast<void*>(offset_), target_, nullptr,
-                  &hook_trace_info_);
-
-    ULONG acl_entries[1] = {0};
-    LhSetExclusiveACL(acl_entries, 1, &hook_trace_info_);
-  }
-
- private:
-  uintptr_t offset_;
-  Func original_;
-  void* target_;
-  HOOK_TRACE_INFO hook_trace_info_;
+  Hook() : HookBase(offset), original(decltype(original)(offset)) {}
 };
 
 template <uintptr_t offset, typename R, typename... Args>
-class Hook<offset, R(__fastcall*)(Args...)> {
+class Hook<offset, R(__fastcall*)(Args...)> : public HookBase {
  public:
   typedef R(__fastcall* Func)(Args...);
 
-  Func& original = original_;
+  Func original = nullptr;
 
-  Hook()
-      : offset_(offset),
-        original_(decltype(original_)(offset)),
-        target_(nullptr),
-        hook_trace_info_() {}
-
-  Hook(const Hook&) = delete;
-  Hook(Hook&&) = delete;
-
-  void operator=(const Hook&) = delete;
-  void operator=(Hook&&) = delete;
-
-  ~Hook() { LhUninstallHook(&hook_trace_info_); }
-
-  void Initialize(void* target) {
-    target_ = target;
-    spdlog::info("Initializing hook at 0x{0:x} [hook function: {1}]", offset,
-                 target);
-
-    LhInstallHook(reinterpret_cast<void*>(offset_), target_, nullptr,
-                  &hook_trace_info_);
-
-    ULONG acl_entries[1] = {0};
-    LhSetExclusiveACL(acl_entries, 1, &hook_trace_info_);
-  }
-
- private:
-  uintptr_t offset_;
-  Func original_;
-  void* target_;
-  HOOK_TRACE_INFO hook_trace_info_;
+  Hook() : HookBase(offset), original(decltype(original)(offset)) {}
 };
 
 template <uintptr_t offset, typename R, typename... Args>
-class Hook<offset, R(__cdecl*)(Args...)> {
+class Hook<offset, R(__cdecl*)(Args...)> : public HookBase {
  public:
   typedef R(__cdecl* Func)(Args...);
 
-  Func& original = original_;
+  Func original = nullptr;
 
-  Hook()
-      : offset_(offset),
-        original_(decltype(original_)(offset)),
-        target_(nullptr),
-        hook_trace_info_() {}
-
-  Hook(const Hook&) = delete;
-  Hook(Hook&&) = delete;
-
-  void operator=(const Hook&) = delete;
-  void operator=(Hook&&) = delete;
-
-  ~Hook() { LhUninstallHook(&hook_trace_info_); }
-
-  void Initialize(void* target) {
-    target_ = target;
-    spdlog::info("Initializing hook at 0x{0:x} [hook function: {1}]", offset,
-                 target);
-
-    LhInstallHook(reinterpret_cast<void*>(offset_), target_, nullptr,
-                  &hook_trace_info_);
-
-    ULONG acl_entries[1] = {0};
-    LhSetExclusiveACL(acl_entries, 1, &hook_trace_info_);
-  }
-
- private:
-  uintptr_t offset_;
-  Func original_;
-  void* target_;
-  HOOK_TRACE_INFO hook_trace_info_;
+  Hook() : HookBase(offset), original(decltype(original)(offset)) {}
 };
