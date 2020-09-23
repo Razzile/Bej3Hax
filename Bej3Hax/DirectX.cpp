@@ -137,18 +137,21 @@ LRESULT __stdcall WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
       }
       break;
     }
-    case WM_MBUTTONDOWN: {
-      if (menu_open_) {
-        return true;
-      }
-      break;
-    }
     default:
       break;
   }
 
   if (menu_open_) {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam)) return true;
+
+    auto& io = ImGui::GetIO();
+    if (io.WantCaptureMouse &&
+        (uMsg == WM_LBUTTONDOWN || uMsg == WM_LBUTTONUP ||
+         uMsg == WM_RBUTTONDOWN || uMsg == WM_RBUTTONUP ||
+         uMsg == WM_MBUTTONDOWN || uMsg == WM_MBUTTONUP ||
+         uMsg == WM_MOUSEWHEEL || uMsg == WM_MOUSEMOVE)) {
+      return true;
+    }
   }
 
   return CallWindowProc(oWndProc, hWnd, uMsg, wParam, lParam);
