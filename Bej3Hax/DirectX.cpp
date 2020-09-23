@@ -6,8 +6,9 @@
 #include <imgui_impl_dx9.h>
 #include <imgui_impl_win32.h>
 
+#include "Menu.h"
 
-typedef LRESULT (CALLBACK *WNDPROC)(HWND, UINT, WPARAM, LPARAM);
+typedef LRESULT(CALLBACK* WNDPROC)(HWND, UINT, WPARAM, LPARAM);
 WNDPROC oWndProc;
 
 LRESULT __stdcall WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -80,9 +81,8 @@ bool DirectXHook::Initialize(std::string window_name) {
 
   spdlog::info("Installing WndProc hook");
   auto window = FindWindowA(nullptr, window_name_.c_str());
-  oWndProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(window, GWL_WNDPROC,
-                                                        reinterpret_cast<
-                                                          LONG_PTR>(WndProc)));
+  oWndProc = reinterpret_cast<WNDPROC>(SetWindowLongPtr(
+      window, GWL_WNDPROC, reinterpret_cast<LONG_PTR>(WndProc)));
 
   spdlog::info("Installing D3D9 hook");
 
@@ -110,6 +110,8 @@ HRESULT __stdcall DirectXHook::MyPresent(IDirect3DDevice9* device,
 
     ImGui_ImplWin32_Init(FindWindowA(NULL, window_name_.c_str()));
     ImGui_ImplDX9_Init(device);
+
+    Menu::Setup();
   }
 
   if (menu_open_) {
@@ -117,7 +119,11 @@ HRESULT __stdcall DirectXHook::MyPresent(IDirect3DDevice9* device,
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
+#ifdef _DEBUG
     ImGui::ShowDemoWindow();
+#endif
+
+    Menu::Render();
 
     ImGui::EndFrame();
     ImGui::Render();
