@@ -15,8 +15,8 @@ Settings Hooks::settings;
 
 Board::GetSelectedPiece Hooks::oGetSelectedPiece = nullptr;
 
-Hook<kDoUpdateAddr, Board::DoUpdate> doUpdateHook;
-Hook<kTrySwapAddr, Board::TrySwap> trySwapHook;
+Hook<Board::DoUpdate> doUpdateHook(kDoUpdateAddr);
+Hook<Board::TrySwap> trySwapHook(kTrySwapAddr);
 
 __declspec(naked) Sexy::Piece* _fastcall GetSelectedPieceHelper(
     Sexy::Board* board) {

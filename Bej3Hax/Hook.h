@@ -1,31 +1,32 @@
 #pragma once
-#include "pch.h"
-
 #include <easyhook.h>
 #include <spdlog/spdlog.h>
 
 #include <functional>
 
-template <uintptr_t offset, typename Func>
+#include "pch.h"
+
+template <typename Func>
 class Hook;
 
 class HookBase {
-public:
+ public:
   HookBase(uintptr_t offset)
-    : offset_(offset),
-      target_(nullptr),
-      hook_trace_info_() {
-  }
+      : offset_(offset), target_(nullptr), hook_trace_info_() {}
 
   HookBase(const HookBase&) = delete;
-  HookBase(HookBase&&) = delete;
 
   void operator=(const HookBase&) = delete;
-  void operator=(HookBase&&) = delete;
 
-  ~HookBase() {
-    LhUninstallHook(&hook_trace_info_);
+  HookBase& operator=(HookBase&& other) noexcept {
+    this->target_ = other.target_;
+    this->offset_ = other.offset_;
+    this->hook_trace_info_ = other.hook_trace_info_;
+
+    return *this;
   }
+
+  ~HookBase() { LhUninstallHook(&hook_trace_info_); }
 
   void Initialize(void* target) {
     target_ = target;
@@ -39,52 +40,96 @@ public:
     LhSetExclusiveACL(acl_entries, 1, &hook_trace_info_);
   }
 
-private:
+ private:
   uintptr_t offset_;
   void* target_;
   HOOK_TRACE_INFO hook_trace_info_;
 };
 
-
-template <uintptr_t offset, typename R, typename... Args>
-class Hook<offset, R(__thiscall*)(Args ...)> : public HookBase {
-public:
-  typedef R (__thiscall* Func)(Args ...);
+template <typename R, typename... Args>
+class Hook<R(__thiscall*)(Args...)> : public HookBase {
+ public:
+  typedef R(__thiscall* Func)(Args...);
 
   Func original = nullptr;
 
-  Hook()
-    : HookBase(offset),
-      original(decltype(original)(offset)) {
+  Hook(uintptr_t offset)
+      : HookBase(offset), original(decltype(original)(offset)) {}
+
+  Hook(Hook&& other) noexcept : HookBase(std::move(other)) {
+    this->original = other.original;
+  }
+
+  Hook& operator=(Hook&& other) noexcept {
+    HookBase::operator=(std::move(other));
+    this->original = other.original;
+
+    return *this;
   }
 };
 
-template <uintptr_t offset, typename R, typename... Args>
-class Hook<offset, R(__stdcall*)(Args...)> : public HookBase {
+template <typename R, typename... Args>
+class Hook<R(__stdcall*)(Args...)> : public HookBase {
  public:
   typedef R(__stdcall* Func)(Args...);
 
   Func original = nullptr;
 
-  Hook() : HookBase(offset), original(decltype(original)(offset)) {}
+  Hook(uintptr_t offset)
+      : HookBase(offset), original(decltype(original)(offset)) {}
+
+  Hook(Hook&& other) noexcept : HookBase(std::move(other)) {
+    this->original = other.original;
+  }
+
+  Hook& operator=(Hook&& other) noexcept {
+    HookBase::operator=(std::move(other));
+    this->original = other.original;
+
+    return *this;
+  }
 };
 
-template <uintptr_t offset, typename R, typename... Args>
-class Hook<offset, R(__fastcall*)(Args...)> : public HookBase {
+template <typename R, typename... Args>
+class Hook<R(__fastcall*)(Args...)> : public HookBase {
  public:
   typedef R(__fastcall* Func)(Args...);
 
   Func original = nullptr;
 
-  Hook() : HookBase(offset), original(decltype(original)(offset)) {}
+  Hook(uintptr_t offset)
+      : HookBase(offset), original(decltype(original)(offset)) {}
+
+  Hook(Hook&& other) noexcept : HookBase(std::move(other)) {
+    this->original = other.original;
+  }
+
+  Hook& operator=(Hook&& other) noexcept {
+    HookBase::operator=(std::move(other));
+    this->original = other.original;
+
+    return *this;
+  }
 };
 
-template <uintptr_t offset, typename R, typename... Args>
-class Hook<offset, R(__cdecl*)(Args...)> : public HookBase {
+template <typename R, typename... Args>
+class Hook<R(__cdecl*)(Args...)> : public HookBase {
  public:
   typedef R(__cdecl* Func)(Args...);
 
   Func original = nullptr;
 
-  Hook() : HookBase(offset), original(decltype(original)(offset)) {}
+  Hook(uintptr_t offset)
+      : HookBase(offset), original(decltype(original)(offset)) {}
+
+  Hook(Hook&& other) noexcept : HookBase(std::move(other)) {
+    this->original = other.original;
+  }
+
+  Hook& operator=(Hook&& other) noexcept {
+    HookBase::operator=(std::move(other));
+    this->original = other.original;
+
+    return *this;
+  }
 };
