@@ -24,7 +24,8 @@ DWORD FindProcessID(std::wstring procName) {
         CloseHandle(hndl);
         return process.th32ProcessID;
       }
-    } while (Process32Next(hndl, &process));
+    }
+    while (Process32Next(hndl, &process));
 
     CloseHandle(hndl);
   }
@@ -32,13 +33,17 @@ DWORD FindProcessID(std::wstring procName) {
 }
 
 int main() {
-  spdlog::set_level(spdlog::level::info);
 #ifdef _DEBUG
   spdlog::set_level(spdlog::level::debug);
-#endif
 
   std::filesystem::path dllPath =
       std::filesystem::current_path().parent_path() / "Debug" / "Bej3Hax.dll";
+#else
+  spdlog::set_level(spdlog::level::info);
+  std::filesystem::path dllPath =
+      std::filesystem::current_path().parent_path() / "Release" / "Bej3Hax.dll";
+#endif
+
   spdlog::info("Attempting to inject: {}", dllPath.string());
 
   auto processId = FindProcessID(L"Bejeweled3.exe");
@@ -57,14 +62,15 @@ int main() {
   // Inject dllToInject into the target process Id, passing
   // freqOffset as the pass through data.
   NTSTATUS nt =
-      RhInjectLibrary(processId,  // The process to inject into
-                      0,          // ThreadId to wake up upon injection
+      RhInjectLibrary(processId, // The process to inject into
+                      0,         // ThreadId to wake up upon injection
                       EASYHOOK_INJECT_DEFAULT,
-                      dllPath.wstring().data(),  // 32-bit
-                      nullptr,                   // 64-bit not provided
-                      &settings,  // data to send to injected DLL entry point
-                      sizeof(settings)  // size of data to send
-      );
+                      dllPath.wstring().data(), // 32-bit
+                      nullptr,                  // 64-bit not provided
+                      &settings,
+                      // data to send to injected DLL entry point
+                      sizeof(settings) // size of data to send
+          );
 
   if (nt != 0) {
     PWCHAR err = RtlGetLastErrorString();
